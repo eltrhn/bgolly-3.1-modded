@@ -132,7 +132,7 @@ options options[] = {
   { "-i", "--stepsize", "Step size", 'I', &inc },
   { "-M", "--maxmemory", "Max memory to use in megabytes", 'i', &maxmem },
   { "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyper },
-  { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
+//  { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
   { "-s", "--search", "Search directory for .rule files", 's', &user_rules },
   { "-h", "--hashlife", "Use Hashlife algorithm", 'b', &hashlife },
@@ -191,7 +191,6 @@ void writepat(int fc) {
       strcpy(p, outfilename + numberoffset) ;
       thisfilename = tmpfilename ;
    }
-   cerr << "(->" << thisfilename << flush ;
    bigint t, l, b, r ;
    imp->findedges(&t, &l, &b, &r) ;
    if (!outputismc && (t < -MAXRLE || l < -MAXRLE || b > MAXRLE || r > MAXRLE))
@@ -202,7 +201,6 @@ void writepat(int fc) {
                                   t.toint(), l.toint(), b.toint(), r.toint()) ;
    if (err != 0)
       lifewarning(err) ;
-   cerr << ")" << flush ;
 }
 
 const int MAXCMDLENGTH = 2048 ;
@@ -503,8 +501,8 @@ void runtestscript(const char *testscript) {
 }
 
 int main(int argc, char *argv[]) {
-   cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2017 The Golly Gang."
-        << endl << flush ;
+   //cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2017 The Golly Gang."
+   //     << endl << flush ;
    qlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    hlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    generationsalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
@@ -619,16 +617,17 @@ case 's':
       imp->startrecording(2, lowbit) ;
    }
    int fc = 0 ;
+   writepat(-1) ;
    for (;;) {
-      if (quiet < 2) {
-         cout << imp->getGeneration().tostring() ;
-         if (!quiet)
-            cout << ": " << imp->getPopulation().tostring() << endl ;
-         else
-            cout << endl ;
-      }
+//      if (quiet < 2) {
+//         cout << imp->getGeneration().tostring() ;
+//         if (!quiet)
+//            cout << ": " << imp->getPopulation().tostring() << endl ;
+//         else
+//            cout << endl ;
+//      }
       if (popcount)
-         imp->getPopulation() ;
+        imp->getPopulation() ;
       if (autofit)
         imp->fit(viewport, 1) ;
       if (render)
@@ -653,8 +652,9 @@ case 's':
          imp->pruneframes() ;
       if (hyper)
          imp->setIncrement(imp->getGeneration()) ;
+      if (maxgen >= 0 && outfilename != 0)
+         writepat(-1) ;
    }
-   if (maxgen >= 0 && outfilename != 0)
-      writepat(-1) ;
+
    exit(0) ;
 }

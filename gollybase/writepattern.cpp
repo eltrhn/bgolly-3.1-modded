@@ -50,16 +50,17 @@ void AddRun(std::ostream &f,
    unsigned int i, numlen;
    char numstr[32];
 
-   if ( run > 1 ) {
-      sprintf(numstr, "%u", run);
-      numlen = (int)strlen(numstr);
-   } else {
-      numlen = 0;                      // no run count shown if 1
-   }
-   if ( linelen + numlen + 1 + multistate > 70 ) {
+//   if ( run > 1 ) {
+   sprintf(numstr, "%u", run);
+   numlen = (int)strlen(numstr);
+//   } else {
+//      numlen = 0;                      // no run count shown if 1
+//   }
+/*   if ( linelen + numlen + 1 + multistate > 70 ) {
       putchar('\n', f);
       linelen = 0;
    }
+*/
    i = 0;
    while (i < numlen) {
       putchar(numstr[i], f);
@@ -92,13 +93,16 @@ const char *writerle(std::ostream &os, char *comments, lifealgo &imp,
    if (xrle) {
       // write out #CXRLE line; note that the XRLE indicator is prefixed
       // with #C so apps like Life32 and MCell will ignore the line
-      os << "#CXRLE Pos=" << left << ',' << top;
-      if (imp.getGeneration() > bigint::zero)
-         os << " Gen=" << imp.getGeneration().tostring('\0');
-      os << '\n';
+      
+      /* BELOW MODIFIED TO MAKE PYTHON PARSING OF THIS A LITTLE LESS OF A GIANT HEADACHE (changed pos output to simple x,y tuple) */
+      
+      os << left << ',' << top << '\n';
+      //if (imp.getGeneration() > bigint::zero)
+      //   os << " Gen=" << imp.getGeneration().tostring('\0');
    }
 
    char *endcomms = NULL;
+   /*
    if (comments && comments[0]) {
       // write given comment line(s) -- can't just do fputs(comments,f)
       // because comments might include arbitrary text after the "!"
@@ -115,16 +119,22 @@ const char *writerle(std::ostream &os, char *comments, lifealgo &imp,
       }
       // any comment lines not starting with # will be written after "!"
       if (*p != '\0') endcomms = p;
+      
    }
+   */
 
+
+
+   /* BELOW MODIFIED TO MAKE PYTHON PARSING OF THIS A LITTLE LESS OF A GIANT HEADACHE (changed bounding box output to simple x,y tuple) */
+   
    if ( imp.isEmpty() || top > bottom || left > right ) {
       // empty pattern
-      os << "x = 0, y = 0, rule = " << imp.getrule() << "\n!\n";
+      os << "1,1\nb!\n";
    } else {
       // do header line
       unsigned int wd = right - left + 1;
       unsigned int ht = bottom - top + 1;
-      sprintf(outbuff, "x = %u, y = %u, rule = %s\n", wd, ht, imp.getrule());
+      sprintf(outbuff, "%u,%u\n", wd, ht);
       outpos = strlen(outbuff);
 
       // do RLE data
@@ -296,6 +306,8 @@ const char *writepattern(const char *filename, lifealgo &imp,
                          pattern_format format, output_compression compression,
                          int top, int left, int bottom, int right)
 {
+
+
    // extract any comments if file exists so we can copy them to new file
    char *commptr = NULL;
    FILE *f = fopen(filename, "r");
@@ -317,6 +329,7 @@ const char *writepattern(const char *filename, lifealgo &imp,
       }
    }
 
+
    // open output stream
    std::streambuf *streambuf = NULL;
    std::filebuf filebuf;
@@ -327,7 +340,7 @@ const char *writepattern(const char *filename, lifealgo &imp,
    switch (compression)
    {
    default:  /* no output compression */
-      streambuf = filebuf.open(filename, std::ios_base::out);
+      streambuf = filebuf.open(filename, std::ios_base::app);
       break;
 
    case gzip_compression:
@@ -350,7 +363,9 @@ const char *writepattern(const char *filename, lifealgo &imp,
    const char *errmsg = NULL;
    switch (format) {
       case RLE_format:
-         errmsg = writerle(os, comments, imp, top, left, bottom, right, false);
+         errmsg = writerle(os, comments, imp, top, left, bottom, right, true); // last arg (xrle) was originally false, I changed it to force true because bgolly has no "write xrle" flag
+                                                                               // ...of course, I could also just define a setXRLE() in public class of some included header file,
+                                                                               // but this takes a marginally lower amount of effort
          break;
 
       case XRLE_format:
